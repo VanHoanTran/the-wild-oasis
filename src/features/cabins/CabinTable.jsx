@@ -3,9 +3,22 @@ import CabinRow from './CabinRow';
 import { useCabins } from './useCabins';
 import Table from '../../ui/Table';
 import Menus from '../../ui/Menus';
+import {useSearchParams} from 'react-router-dom'
+
 
 const CabinTable = () => {
-  const { isLoading, cabins } = useCabins();
+  const { isLoading, cabins: initialCabins } = useCabins();
+  let cabins = initialCabins;
+
+  
+  let [searchParams ] = useSearchParams();
+  const sortBy = searchParams.get('discount') || 'all';
+
+    if (sortBy ==='with-discount')
+      cabins = cabins.filter(cabin=> cabin.discount > 0)
+    if(sortBy ==='no-discount')
+      cabins = cabins.filter(cabin=>cabin.discount === 0)
+
   if (isLoading) return <Spinner />;
   return (
     <Menus>
