@@ -8,12 +8,11 @@ function Cabins() {
     <>
       <Row type='horizontal'>
         <Heading as='h1'>All cabins</Heading>
-        <CabinTableOperations/>
+        <CabinTableOperations />
       </Row>
+
       <Row>
         <CabinTable />
-      </Row>
-      <Row>
         <AddCabin />
       </Row>
     </>

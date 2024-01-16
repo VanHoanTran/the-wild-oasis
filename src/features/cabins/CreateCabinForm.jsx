@@ -6,7 +6,6 @@ import Textarea from '../../ui/Textarea';
 import { useForm } from 'react-hook-form';
 import FormRow from '../../ui/FormRow';
 import useCreateUpdateCabin from './useCreateUpdateCabin';
-import { da } from 'date-fns/locale';
 
 function CreateCabinForm({ cabinToEdit, hideForm }) {
   const { id: editId, ...editValues } = cabinToEdit ?? {};

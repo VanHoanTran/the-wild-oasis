@@ -1,24 +1,32 @@
 //import { da } from 'date-fns/locale';
-import supabase, { supabaseUrl } from './supabase';
+import supabase from './supabase';
 import { v4 as uuidv4 } from 'uuid';
 
-// if hasImage=true, image is imagePath
-// if hasImage=false, create path from image object
-function imagePathCreator(image) {
-  const hasImage = typeof image === 'string';
-  if (hasImage) {
-    return { hasImage, imagePath: image };
+export function imagePathCreator(image, storage) {
+  //there is no image uploaded
+  if (image === null) {
+    return { imageName: '', imagePath: '' };
   }
+
+  // there is an existed imagePath, don't upload again
+  if (typeof image === 'string') {
+    return { imageName: '', imagePath: image };
+  }
+
+  // there is a image object would like to upload
   const imageName = `${uuidv4()}-${image.name}`.replaceAll('/', '');
-  const storageLocation = 'storage/v1/object/public/cabin-images';
-  const imagePath = `${supabaseUrl}/${storageLocation}/${imageName}`;
-  return { hasImage, imageName, imagePath };
+  const storageLocation = `storage/v1/object/public/${storage}`;
+  // eslint-disable-next-line no-undef
+  const imagePath = `${JSON.stringify(
+    import.meta.env.VITE_SUPABASE_URL
+  )}/${storageLocation}/${imageName}`;
+  return { imageName, imagePath };
 }
 
-async function uploadImage(image, imageName) {
+export async function uploadImage(image, imageName, storage) {
   //const image = newCabin.image;
   const { error: uploadingError } = await supabase.storage
-    .from('cabin-images')
+    .from(storage)
     .upload(imageName, image, {
       cacheControl: '3600',
       upsert: false,
@@ -39,16 +47,13 @@ export async function deleteCabin(id) {
   const { error } = await supabase.from('cabins').delete().eq('id', id);
   if (error) {
     console.error(error);
-    throw new Error(`Cabin with id=${id} could not be found`);
+    throw new Error(error.details);
   }
 }
 
 export async function createCabin(newCabin) {
-  const {
-    hasImage,
-    imageName = '',
-    imagePath,
-  } = imagePathCreator(newCabin.image);
+  const storage = 'cabin-images';
+  const { imageName, imagePath } = imagePathCreator(newCabin.image, storage);
 
   //1. Create cabin
   const { data, error } = await supabase
@@ -59,12 +64,17 @@ export async function createCabin(newCabin) {
 
   if (error) {
     console.error(error);
-    throw new Error(`Cabin could not be created`);
+    throw new Error(error.details);
   }
 
-  if (hasImage) return data;
+  if (imageName === '') return data;
+
   //2. upload an image
-  const { uploadingError } = await uploadImage(newCabin.image, imageName);
+  const { uploadingError } = await uploadImage(
+    newCabin.image,
+    imageName,
+    storage
+  );
 
   //3. Delete the cabin IF there was an error uploading image
   if (uploadingError) {
@@ -78,12 +88,14 @@ export async function createCabin(newCabin) {
 }
 
 export async function updateCabin({ id, newCabin }) {
-  console.log(newCabin);
+  const storage = 'cabin-images';
   const { image, ...cabin } = newCabin;
-  const { hasImage, imageName = '', imagePath } = imagePathCreator(image);
-
-  const uploadCabin = hasImage ? cabin : { ...newCabin, image: imagePath };
-
+  const { imageName, imagePath } = imagePathCreator(image, storage);
+  console.log(id);
+  // if there is no imageName means upload cabin without an image
+  const uploadCabin =
+    imageName === '' ? cabin : { ...newCabin, image: imagePath };
+  console.log({ imageName, imagePath });
   const { data, error } = await supabase
     .from('cabins')
     .update([uploadCabin])
@@ -95,10 +107,14 @@ export async function updateCabin({ id, newCabin }) {
     throw new Error(`Cabin could not be updated`);
   }
 
-  if (hasImage) return data;
+  if (imageName === '') return data;
   //2. upload an image
 
-  const { uploadingError } = await uploadImage(newCabin.image, imageName);
+  const { uploadingError } = await uploadImage(
+    newCabin.image,
+    imageName,
+    storage
+  );
   if (uploadingError) {
     //3. Delete the cabin IF there was an error uploading image
     await deleteCabin(data.id);

@@ -5,7 +5,6 @@ import {
   HiOutlineSquare2Stack,
   HiOutlineTrash,
 } from 'react-icons/hi2';
-import ButtonIcon from '../../ui/ButtonIcon';
 import CreateCabinForm from './CreateCabinForm';
 import useDeleteCabin from './useDeleteCabin';
 import useCreateUpdateCabin from './useCreateUpdateCabin';
@@ -42,10 +41,10 @@ const Discount = styled.div`
 
 const CabinRow = ({ cabin }) => {
   const { isDeleting, deleteCabin } = useDeleteCabin();
-  const { isWorking, createOrUpdateCabin } = useCreateUpdateCabin(false);
+  const { createOrUpdateCabin } = useCreateUpdateCabin(false);
+  const { id, ...repCabin } = cabin;
 
   const handleDuplicate = () => {
-    const { id, ...repCabin } = cabin;
     createOrUpdateCabin({ ...repCabin, name: `Copy of ${repCabin.name}` });
   };
 
@@ -55,12 +54,17 @@ const CabinRow = ({ cabin }) => {
       <Cabin>{cabin.name}</Cabin>
       <div>Fits up to {cabin.maxCapacity}</div>
       <Price>{formatCurrency(cabin.regularPrice)}</Price>
-      <Discount>{formatCurrency(cabin.discount)}</Discount>
+      {cabin.discount ? (
+        <Discount>{formatCurrency(cabin.discount)}</Discount>
+      ) : (
+        <span>&mdash;</span>
+      )}
+
       <div>
         <Modal>
           <Menus.Menu>
-            <Menus.Toggle id={cabin.id} />
-            <Menus.List id={cabin.id}>
+            <Menus.Toggle id={id} />
+            <Menus.List id={id}>
               <Menus.Button
                 icon={<HiOutlineSquare2Stack />}
                 onClick={handleDuplicate}
@@ -85,7 +89,7 @@ const CabinRow = ({ cabin }) => {
               <ConfirmDelete
                 resourceName='cabins'
                 disabled={isDeleting}
-                onConfirm={() => deleteCabin(cabin.id)}
+                onConfirm={() => deleteCabin(id)}
               />
             </Modal.Window>
           </Menus.Menu>
