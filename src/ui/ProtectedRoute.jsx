@@ -3,7 +3,6 @@ import useUser from '../features/authentication/useUser';
 import Spinner from '../ui/Spinner';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { is } from 'date-fns/locale';
 const FullPage = styled.div`
   height: 100vh;
   background-color: var(--color-grey-50);

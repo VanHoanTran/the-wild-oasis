@@ -10,7 +10,7 @@ const useLogin = () => {
     onSuccess: (data) => {
       queryClient.setQueryData(['currentUser'], data.user);
       toast.success('Successfully login!');
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     },
     onError: (err) => {
       toast.error(err.message);
